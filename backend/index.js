@@ -6,12 +6,12 @@ import connectDB from './db/connectDB.js';
 
 import passport from 'passport';
 import session from 'express-session';
-import ConnectMongoDBSession from 'connect-mongodb-session';
+import connectMongo from "connect-mongodb-session"
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { buildContext } from 'graphql-passport';
-import configurePassport from "./passport/passport.config.js"
+import {configurePassport} from "./passport/passport.config.js"
 
 import mergedResolvers from './resolvers/index.js';
 import mergedTypeDefs from './typeDefs/index.js';
@@ -26,11 +26,11 @@ const app = express();
 const httpServer = http.createServer(app);
 
 // Create a MongoDB session store
-const MongoDBStore = ConnectMongoDBSession(session);
+const MongoDBStore = connectMongo(session);
 
 // Configure the session store with MongoDB URI and collection name
 const store = new MongoDBStore({
-    uri: process.env.MONGO_URI,
+    uri: process.env.MONGO_URL,
     collection: 'sessions',
 });
 
@@ -67,21 +67,21 @@ await server.start();
 
 // Apply middleware to the Express app
 app.use(
-    '/',
+    '/graphql',
     cors({
         origin: 'http://localhost:3000',
         credentials: true,
-    }), // Enable Cross-Origin Resource Sharing
-    express.json(), // Parse incoming JSON requests
+    }),
+    express.json(),
     expressMiddleware(server, {
-        context: async ({ req }) => buildContext({ req }), // Provide request context to ApolloServer
+        context: async ({ req, res }) => buildContext({ req, res }), 
     })
 );
 
 // Start the HTTP server and listen on port 4000
 await new Promise((resolve) => {
     httpServer.listen({ port: 4000 }, resolve);
-    console.log(`🚀 Server ready at http://localhost:4000`);
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
 });
 
 // Connect to the MongoDB database
