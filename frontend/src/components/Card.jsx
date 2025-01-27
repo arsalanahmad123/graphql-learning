@@ -12,6 +12,9 @@ import { FaSackDollar } from 'react-icons/fa6';
 import { FaTrash } from 'react-icons/fa';
 import { HiPencilAlt } from 'react-icons/hi';
 import { Link } from 'react-router-dom';
+import {useMutation} from "@apollo/client";
+import {DELETE_TRANSACTION} from "../graphql/mutations/transaction.mutation.js";
+import {toast} from "react-hot-toast";
 
 const MouseEnterContext = createContext(undefined);
 
@@ -125,14 +128,38 @@ const useMouseEnter = () => {
 };
 
 const Card = ({
-    cardType,
+    id,
+    category,
     description,
     paymentType,
     amount,
     location,
     date,
 }) => {
-    const categoryClass = categoryColorMap[cardType];
+    const categoryClass = categoryColorMap[category];
+
+    description = description[0]?.toUpperCase() + description.slice(1);
+    category = category[0]?.toUpperCase() + category.slice(1);
+    paymentType = paymentType[0]?.toUpperCase() + paymentType.slice(1);
+
+
+    const [deleteTransaction, {loading}] = useMutation(DELETE_TRANSACTION,{
+        refetchQueries: ['GetTransactions']
+    });
+
+    const handleDelete = async() => {
+        try {
+            await deleteTransaction({
+                variables: {
+                    transactionID: id
+                }
+            });
+            toast.success("Transaction deleted successfully")
+        } catch (error) {
+         console.error("Error deleting transaction",error)
+         toast.error("Error deleting transaction")   
+        }
+    }
 
     return (
         <CardContainer>
@@ -145,12 +172,13 @@ const Card = ({
                         <div
                             className={`${categoryClass} text-white px-3 py-1 rounded-full text-sm font-semibold`}
                         >
-                            {cardType.charAt(0).toUpperCase() +
-                                cardType.slice(1)}
+                            {category}
                         </div>
                         <div className="flex items-center gap-2">
-                            <FaTrash className="cursor-pointer text-white hover:text-red-500 transition-colors" />
-                            <Link to={`/transaction/123`}>
+                            {!loading ? <FaTrash className="cursor-pointer text-white hover:text-red-500 transition-colors" onClick={handleDelete} /> : 
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                }
+                            <Link to={`/transaction/${id}`}>
                                 <HiPencilAlt
                                     className="cursor-pointer text-white hover:text-blue-500 transition-colors"
                                     size={20}
@@ -179,7 +207,7 @@ const Card = ({
                             </div>
                             <div className="flex items-center">
                                 <FaLocationDot className="mr-2 text-gray-300" />
-                                <p className="text-white">{location}</p>
+                                <p className="text-white">{location || 'N/A'}</p> 
                             </div>
                         </div>
                     </CardItem>
