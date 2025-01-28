@@ -135,6 +135,7 @@ const Card = ({
     amount,
     location,
     date,
+    authUser,
 }) => {
     const categoryClass = categoryColorMap[category];
 
@@ -143,8 +144,8 @@ const Card = ({
     paymentType = paymentType[0]?.toUpperCase() + paymentType.slice(1);
 
 
-    const [deleteTransaction, {loading}] = useMutation(DELETE_TRANSACTION,{
-        refetchQueries: ['GetTransactions']
+    const [deleteTransaction, { loading }] = useMutation(DELETE_TRANSACTION, {
+        refetchQueries: ['GetTransactions', 'GetCategoryStatistics'],
     });
 
     const handleDelete = async() => {
@@ -211,8 +212,9 @@ const Card = ({
                             </div>
                         </div>
                     </CardItem>
-                    <CardItem className="mt-4" translateZ={50}>
+                    <CardItem className="mt-4 flex justify-between items-center" translateZ={50}>
                         <p className="text-sm text-gray-500">{date}</p>
+                        <img src={authUser.profilePicture} alt="transaction user image" className="w-10 h-10 rounded-full" />
                     </CardItem>
                 </div>
             </CardBody>

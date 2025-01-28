@@ -4,9 +4,12 @@ import {toast} from "react-hot-toast"
 
 const TransactionForm = () => {
 
-    const [createTransaction, { loading, error}] = useMutation(CREATE_TRANSACTION,{
-        refetchQueries: ['GetTransactions'],
-    });
+    const [createTransaction, { loading }] = useMutation(
+        CREATE_TRANSACTION,
+        {
+            refetchQueries: ['GetTransactions', 'GetCategoryStatistics'],
+        }
+    );
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,9 +44,6 @@ const TransactionForm = () => {
             className="w-full max-w-lg flex flex-col gap-5 px-3"
             onSubmit={handleSubmit}
         >
-            {
-                error && <p className="text-red-500 text-sm">{error.message}</p>
-            }
             {/* TRANSACTION */}
             <div className="flex flex-wrap">
 

@@ -4,44 +4,89 @@ import Cards from '../components/Cards';
 import TransactionForm from '../components/TransactionForm';
 
 import { MdLogout } from 'react-icons/md';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {toast} from "react-hot-toast"
 import { LOGOUT } from '../graphql/mutations/user.mutation';
+import { GET_CATEGORY_STATISTICS } from '../graphql/queries/transaction.query';
+import { CURRENT_USER } from '../graphql/queries/user.query';
+import { useEffect, useState } from 'react';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HomePage = () => {
-    const chartData = {
-        labels: ['Saving', 'Expense', 'Investment'],
+
+    const {data} = useQuery(GET_CATEGORY_STATISTICS);
+    const {data: authUserData} = useQuery(CURRENT_USER);
+
+
+
+    const [logout, { loading, client }] = useMutation(LOGOUT, {
+        refetchQueries: ['GetCurrentUser'],
+    });
+
+
+    const [chartData, setChartData] = useState({
+        labels: [],
         datasets: [
             {
-                label: '%',
+                label: '$',
                 data: [13, 8, 3],
-                backgroundColor: [
-                    'rgba(75, 192, 192)',
-                    'rgba(255, 99, 132)',
-                    'rgba(54, 162, 235)',
-                ],
-                borderColor: [
-                    'rgba(75, 192, 192)',
-                    'rgba(255, 99, 132)',
-                    'rgba(54, 162, 235, 1)',
-                ],
+                backgroundColor: [],
+                borderColor: [],
                 borderWidth: 1,
                 borderRadius: 30,
                 spacing: 10,
                 cutout: 130,
             },
         ],
-    };
-
-    const [logout,{loading}] = useMutation(LOGOUT,{
-        refetchQueries: ["GetCurrentUser"]
     });
+
+    useEffect(() => {
+
+        if(data?.categoryStatistics){
+            const categories = data?.categoryStatistics.map((category) => {
+                return category._id;
+            })
+            const totalAmounts = data?.categoryStatistics.map((category) => {
+                return category.totalAmount;
+            })
+
+            const backgroundColors = [];
+            const borderColors = [];
+
+            const categoryColorMap = {
+                saving: '#32CD32',
+                expense: '#FF6347',
+                investment: '#1E90FF',
+            };
+
+            categories.forEach(c => {
+                const color = categoryColorMap[c] || '#000000';
+                backgroundColors.push(color);
+                borderColors.push(color);
+            });
+
+            setChartData(prev => ({
+                labels: categories,
+                datasets: [
+                    {
+                        ...prev.datasets[0],
+                        data: totalAmounts,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        
+                    },
+                ],
+            }))
+        }
+
+    },[data])
+
 
     const handleLogout = async() => {
         try {
             await logout();
+            client.resetStore();
         } catch (error) {
             console.error("Error logging out",error)
             toast.error(error.message)
@@ -57,7 +102,7 @@ const HomePage = () => {
                         Spend wisely, track wisely
                     </p>
                     <img
-                        src={'https://tecdn.b-cdn.net/img/new/avatars/2.webp'}
+                        src={authUserData?.authUser.profilePicture}
                         className="w-11 h-11 rounded-full border cursor-pointer"
                         alt="Avatar"
                     />
@@ -72,10 +117,12 @@ const HomePage = () => {
                         <div className="w-6 h-6 border-t-2 border-b-2 mx-2 rounded-full animate-spin"></div>
                     )}
                 </div>
-                <div className="flex flex-wrap w-full justify-center items-center gap-6">
+                <div className="flex  w-full justify-center items-center gap-6">
+                { data?.categoryStatistics.length > 0 &&  
                     <div className="h-[330px] w-[330px] md:h-[360px] md:w-[360px]  ">
                         <Doughnut data={chartData} />
                     </div>
+                    }
 
                     <TransactionForm />
                 </div>

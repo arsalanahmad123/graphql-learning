@@ -15,7 +15,10 @@ const Transaction = () => {
         }
     })
 
-    const[updateTransaction, {loading: updateLoading, error: updateError}] = useMutation(UPDATE_TRANSACTION)
+    const [updateTransaction, { loading: updateLoading, error: updateError }] =
+        useMutation(UPDATE_TRANSACTION, {
+            refetchQueries: ['GetTransactions', 'GetCategoryStatistics'],
+        });
 
 
     const [formData, setFormData] = useState({
