@@ -1,4 +1,4 @@
-import { users } from '../dummyData/data.js';
+import {Transaction} from '../models/transaction.model.js'
 import {User} from '../models/user.model.js'
 import bcrypt from "bcryptjs"
 
@@ -106,6 +106,18 @@ const userResolver = {
         },
         
     },
+    User: {
+        transactions: async(parent) => {
+            try {
+                const transactions = await Transaction.find({userId: parent._id}).lean();
+                return transactions;
+            } catch (error) {
+                console.error("Error in User.transactions",error)
+                throw new Error(error.message || "Internal server error");
+            }
+
+        }
+    }
 }
 
 export default userResolver;

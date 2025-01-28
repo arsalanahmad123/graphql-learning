@@ -24,7 +24,29 @@ const transactionResolver = {
                 console.error("Error getting transaction",err)
                 throw new Error(error.message || "Internal server error");
             }
-        }
+        },
+        categoryStatistics: async(_,__,context) => {
+            try {
+                if(!context.getUser()) throw new Error("Unauthorized")
+                
+                const userId =await context.getUser()._id;
+                const categories = await Transaction.aggregate([
+                    {
+                        $match: {userId}
+                    },
+                    {
+                        $group: {
+                            _id: "$category",
+                            totalAmount: {$sum: "$amount"}
+                        }
+                    }
+                ]);
+                return categories
+            } catch (error) {
+                console.error("Error getting category statistics",error)
+                throw new Error(error.message || "Internal server error");
+            }
+        },
     },
     Mutation: {
         createTransaction: async(_,{input},context) => {
