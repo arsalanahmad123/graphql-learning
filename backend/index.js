@@ -15,6 +15,7 @@ import {configurePassport} from "./passport/passport.config.js"
 
 import mergedResolvers from './resolvers/index.js';
 import mergedTypeDefs from './typeDefs/index.js';
+import path from 'path';
 
 // Load environment variables from .env file
 configDotenv();
@@ -77,6 +78,12 @@ app.use(
         context: async ({ req, res }) => buildContext({ req, res }), 
     })
 );
+
+app.use(express.static(path.join(path.resolve(), 'frontend/dist')));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(path.resolve(), 'frontend/dist/index.html'));
+});
 
 // Start the HTTP server and listen on port 4000
 await new Promise((resolve) => {
